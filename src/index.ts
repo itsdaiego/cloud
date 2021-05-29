@@ -21,16 +21,42 @@ assert.strictEqual(escape('console.log("foo")'), 'console.log(\\"foo\\")')
 async function createContainer(opt: ContainerOpt) {
   const { name, code } = opt
 
-  const parsed = escape(code)
+  const _process = spawn(
+    'docker',
+    [
+      'run',
+      '-a',
+      'stdin',
+      '-a',
+      'stdout',
+      '-a',
+      'stderr',
+      '-e',
+      `CODE=${code}`,
+      '--name',
+      name,
+      'app',
+    ],
+    {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }
+  )
 
-  const _process = spawn('docker', [
-    'run',
-    '-e',
-    `CODE="${parsed}"`,
-    '--name',
-    name,
-    'app',
-  ])
+  _process.on('close', (code, signal) => {
+    console.log('close', code, signal)
+  })
+
+  // _process.stdin.on('error', (e) => {
+  //   console.log('error', e)
+  // })
+
+  _process.stderr.on('data', (data) => {
+    console.log('stderr', 'data', data.toString())
+  })
+
+  _process.stdout.on('data', (data) => {
+    console.log('stdout', 'data', data.toString())
+  })
 }
 
 async function deleteContainer(name: string) {
@@ -58,6 +84,8 @@ app.post('/', async (req, res) => {
   const { url, method, hostname, subdomains, body } = req
 
   const { name, code } = body
+
+  // _SUBDOMAIN_TO_PORT[name] = 
 
   await createContainer({ name, code })
 
