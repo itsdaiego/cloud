@@ -1,5 +1,5 @@
 const http = require('http')
-const { fork } = require('child_process');
+const { fork, spawn } = require('child_process');
 
 const server = http.createServer((req, res) => {
   if (req.url === '/') {
